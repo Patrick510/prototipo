@@ -1,12 +1,15 @@
 const record = document.querySelector("#record");
 const stop = document.querySelector("#stop");
 const video = document.querySelector("#video");
-const canvas = document.querySelector("#canvas");
+const photoContainer = document.querySelector("#photoContainer");
 const audioContainer = document.querySelector("#audioContainer");
 
 let stream = null;
 let mediaRecorder = null;
 let audioChunks = [];
+let audioRecorder;
+let audioBlob;
+let imageDataURL;
 
 navigator.mediaDevices
   .getUserMedia({ audio: false, video: true })
@@ -23,31 +26,31 @@ navigator.mediaDevices
 record.addEventListener("click", () => {
   tirarFoto();
   iniciarGravacao();
+  record.disabled = true;
+  stop.disabled = false;
 });
+
 stop.addEventListener("click", () => {
   pararGravacao();
+  record.disabled = false;
+  stop.disabled = true;
 });
 
 function tirarFoto() {
-  if (!stream) {
-    console.error("Stream não está disponível.");
-    return;
-  }
-
-  const video = document.querySelector("video");
-  const canvas = document.createElement("canvas");
-  const context = canvas.getContext("2d");
-
+  const canvas = document.getElementById("canvas");
+  const video = document.getElementById("video");
+  const contexto = canvas.getContext("2d");
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
+  contexto.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-  context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  const dataURL = canvas.toDataURL("image/png");
+  imageDataURL = canvas.toDataURL("image/png");
   const img = document.createElement("img");
-  img.src = dataURL;
+  img.src = imageDataURL;
+  img.className = "rounded-lg border border-gray-300 mt-4";
 
-  document.body.appendChild(img);
+  photoContainer.innerHTML = "";
+  photoContainer.appendChild(img);
 }
 
 function iniciarGravacao() {
@@ -56,43 +59,52 @@ function iniciarGravacao() {
     return;
   }
 
-  mediaRecorder = new MediaRecorder(stream);
+  navigator.mediaDevices
+    .getUserMedia({ audio: true })
+    .then((audioStream) => {
+      audioRecorder = new MediaRecorder(audioStream);
 
-  mediaRecorder.ondataavailable = (event) => {
-    audioChunks.push(event.data);
-  };
+      audioRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data);
+      };
 
-  mediaRecorder.onstop = () => {
-    const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-    const url = URL.createObjectURL(audioBlob);
-    const audioElement = document.createElement("audio");
+      audioRecorder.onstop = () => {
+        audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+        mostrarAudioGravado(audioBlob);
+        audioChunks = [];
+      };
 
-    audioElement.controls = true;
-    audioElement.src = url;
+      audioRecorder.start();
+      console.log("Gravação de áudio iniciada!");
+    })
+    .catch((err) => {
+      console.error("Erro ao acessar o áudio:", err);
+    });
+}
 
-    audioContainer.innerHTML = "";
-    audioContainer.appendChild(audioElement);
-    audioChunks = [];
+function mostrarAudioGravado(blob) {
+  const audio = document.createElement("audio");
+  audio.controls = true;
+  audio.src = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "audio.webm";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  mediaRecorder.start();
-  console.log("Gravação iniciada!");
-
-  setTimeout(() => {
-    pararGravacao();
-  }, 5000);
+  audioContainer.innerHTML = "";
+  audioContainer.appendChild(audio);
 }
 
 function pararGravacao() {
-  if (mediaRecorder && mediaRecorder.state === "recording") {
-    mediaRecorder.stop();
-    console.log("Gravação parada!");
-    stream.getTracks().forEach((track) => track.stop());
+  if (audioRecorder && audioRecorder.state === "recording") {
+    audioRecorder.stop();
+    console.log("Gravação de áudio parada!");
+    console.log("Áudio gravado:", audioBlob);
+    console.log("Imagem capturada:", imageDataURL);
+  } else {
+    console.error("Nenhuma gravação em andamento para parar.");
   }
 }
+
+audioRecorder.onstop = () => {
+  audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+  mostrarAudioGravado(audioBlob);
+  console.log("Áudio gravado:", audioBlob);
+  audioChunks = [];
+};
