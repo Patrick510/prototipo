@@ -1,5 +1,6 @@
 const record = document.querySelector("#record");
 const stop = document.querySelector("#stop");
+const video = document.querySelector("#video");
 const canvas = document.querySelector("#canvas");
 const audioContainer = document.querySelector("#audioContainer");
 
@@ -8,20 +9,46 @@ let mediaRecorder = null;
 let audioChunks = [];
 
 navigator.mediaDevices
-  .getUserMedia({ audio: true, video: false })
+  .getUserMedia({ audio: false, video: true })
   .then((mediaStream) => {
     stream = mediaStream;
+
+    video.srcObject = stream;
+    video.play();
   })
   .catch((err) => {
-    console.error("getUserMedia Error: ", err);
+    console.error("Erro ao acessar mídia:", err);
   });
 
 record.addEventListener("click", () => {
+  tirarFoto();
   iniciarGravacao();
 });
 stop.addEventListener("click", () => {
   pararGravacao();
 });
+
+function tirarFoto() {
+  if (!stream) {
+    console.error("Stream não está disponível.");
+    return;
+  }
+
+  const video = document.querySelector("video");
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const dataURL = canvas.toDataURL("image/png");
+  const img = document.createElement("img");
+  img.src = dataURL;
+
+  document.body.appendChild(img);
+}
 
 function iniciarGravacao() {
   if (!stream) {
