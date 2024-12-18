@@ -20,7 +20,7 @@ xapp.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 @xapp.route("/")
 def home():
     print("Rota principal / acessada")
-    return render_template("index2.html")
+    return render_template("index_teste.html")
 
 def transcrever_audio(audio_path):
     r = sr.Recognizer()
