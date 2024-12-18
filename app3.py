@@ -6,7 +6,6 @@ import pyttsx3
 from dotenv import load_dotenv
 import speech_recognition as sr
 
-
 load_dotenv()
 
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])

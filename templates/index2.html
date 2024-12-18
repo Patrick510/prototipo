@@ -41,7 +41,7 @@
 
         // Envia o áudio, se disponível
         if (audioBlob) {
-          formData.append("audio", audioBlob, "gravacao.mp3");
+          formData.append("audio", audioBlob, "gravacao.webm");
         }
 
         // Envia ambos (imagem e áudio) para o servidor
@@ -64,7 +64,7 @@
             audioChunks.push(event.data);
           };
           audioRecorder.onstop = () => {
-            audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+            audioBlob = new Blob(audioChunks, { type: "audio/webm" });
             mostrarAudioGravado(audioBlob);  // Exibe o reprodutor de áudio
           };
           audioRecorder.start();

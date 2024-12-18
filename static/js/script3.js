@@ -10,6 +10,7 @@ let audioChunks = [];
 let audioRecorder;
 let audioBlob;
 let imageDataURL;
+const data = [];
 
 navigator.mediaDevices
   .getUserMedia({ audio: false, video: true })
@@ -34,6 +35,8 @@ stop.addEventListener("click", () => {
   pararGravacao();
   record.disabled = false;
   stop.disabled = true;
+
+  enviarArquivosParaAPI();
 });
 
 function tirarFoto() {
@@ -48,6 +51,7 @@ function tirarFoto() {
   const img = document.createElement("img");
   img.src = imageDataURL;
   img.className = "rounded-lg border border-gray-300 mt-4";
+  data.push(imageDataURL);
 
   photoContainer.innerHTML = "";
   photoContainer.appendChild(img);
@@ -56,26 +60,20 @@ function tirarFoto() {
 function iniciarGravacao() {
   navigator.mediaDevices
     .getUserMedia({ audio: true })
-    .then((audioStream) => {
-      audioRecorder = new MediaRecorder(audioStream);
-
+    .then((stream) => {
+      audioRecorder = new MediaRecorder(stream);
       audioRecorder.ondataavailable = (event) => {
         audioChunks.push(event.data);
       };
-
       audioRecorder.onstop = () => {
-        console.log("Tipo do primeiro chunk:", audioChunks[0]?.type);
-        audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+        console.log("Gravação de áudio finalizada! Dados:", audioBlob);
+        data.push(audioBlob);
         mostrarAudioGravado(audioBlob);
-        audioChunks = [];
       };
-
       audioRecorder.start();
-      console.log("Gravação de áudio iniciada!");
     })
-    .catch((err) => {
-      console.error("Erro ao acessar o áudio:", err);
-    });
+    .catch((error) => console.error("Erro ao acessar o microfone: ", error));
 }
 
 function mostrarAudioGravado(blob) {
@@ -84,24 +82,54 @@ function mostrarAudioGravado(blob) {
   audioElement.controls = true;
   audioElement.src = audioUrl;
 
-  const downloadButton = document.createElement("a");
-  downloadButton.href = audioUrl;
-  downloadButton.download = "audio_gravado.webm";
-  downloadButton.textContent = "Baixar Áudio";
-  downloadButton.className = "btn btn-primary mt-2";
-
   audioContainer.innerHTML = "";
   audioContainer.appendChild(audioElement);
-  audioContainer.appendChild(downloadButton);
 }
 
 function pararGravacao() {
   if (audioRecorder && audioRecorder.state === "recording") {
     audioRecorder.stop();
+    console.log(data);
     console.log("Gravação de áudio parada!");
-    console.log("Áudio gravado:", audioBlob);
-    console.log("Imagem capturada:", imageDataURL);
   } else {
     console.error("Nenhuma gravação em andamento para parar.");
+  }
+}
+
+function enviarArquivosParaAPI() {
+  const formData = new FormData();
+
+  if (data.length > 0) {
+    const imageData = data.find((item) => item.startsWith("data:image"));
+    const audioData = data.find((item) => item instanceof Blob);
+
+    if (imageData && audioData) {
+      const imageBlob = dataURLToBlob(imageData);
+      formData.append("image", imageBlob, "image.png");
+
+      if (audioData.size > 0) {
+        formData.append("audio", audioData, "audio.webm");
+      }
+
+      fetch("/upload", {
+        method: "POST",
+        body: formData,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Resposta da API:", data);
+          if (data.error) {
+            alert("Erro: " + data.error);
+          } else {
+            alert("Imagem e áudio enviados com sucesso!");
+          }
+        })
+        .catch((error) => {
+          console.error("Erro ao enviar os arquivos:", error);
+          alert("Erro ao enviar os arquivos.");
+        });
+    } else {
+      alert("Erro: Imagem ou áudio não estão disponíveis.");
+    }
   }
 }
