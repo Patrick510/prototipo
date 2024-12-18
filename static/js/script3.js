@@ -84,8 +84,15 @@ function mostrarAudioGravado(blob) {
   audioElement.controls = true;
   audioElement.src = audioUrl;
 
+  const downloadButton = document.createElement("a");
+  downloadButton.href = audioUrl;
+  downloadButton.download = "audio_gravado.webm";
+  downloadButton.textContent = "Baixar Áudio";
+  downloadButton.className = "btn btn-primary mt-2";
+
   audioContainer.innerHTML = "";
   audioContainer.appendChild(audioElement);
+  audioContainer.appendChild(downloadButton);
 }
 
 function pararGravacao() {
