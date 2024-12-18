@@ -54,11 +54,6 @@ function tirarFoto() {
 }
 
 function iniciarGravacao() {
-  if (!stream) {
-    console.error("Stream não está disponível.");
-    return;
-  }
-
   navigator.mediaDevices
     .getUserMedia({ audio: true })
     .then((audioStream) => {
@@ -69,7 +64,8 @@ function iniciarGravacao() {
       };
 
       audioRecorder.onstop = () => {
-        audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
+        console.log("Tipo do primeiro chunk:", audioChunks[0]?.type);
+        audioBlob = new Blob(audioChunks, { type: "audio/webm" });
         mostrarAudioGravado(audioBlob);
         audioChunks = [];
       };
@@ -83,12 +79,13 @@ function iniciarGravacao() {
 }
 
 function mostrarAudioGravado(blob) {
-  const audio = document.createElement("audio");
-  audio.controls = true;
-  audio.src = URL.createObjectURL(blob);
+  const audioUrl = URL.createObjectURL(blob);
+  const audioElement = document.createElement("audio");
+  audioElement.controls = true;
+  audioElement.src = audioUrl;
 
   audioContainer.innerHTML = "";
-  audioContainer.appendChild(audio);
+  audioContainer.appendChild(audioElement);
 }
 
 function pararGravacao() {
@@ -101,10 +98,3 @@ function pararGravacao() {
     console.error("Nenhuma gravação em andamento para parar.");
   }
 }
-
-audioRecorder.onstop = () => {
-  audioBlob = new Blob(audioChunks, { type: "audio/mp3" });
-  mostrarAudioGravado(audioBlob);
-  console.log("Áudio gravado:", audioBlob);
-  audioChunks = [];
-};
