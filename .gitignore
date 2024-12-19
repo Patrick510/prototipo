@@ -4,5 +4,5 @@
 *.png
 *.wav
 *.webm
-
+__pycache__
 .env
