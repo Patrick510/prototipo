@@ -3,5 +3,6 @@
 *.mp3
 *.png
 *.wav
+*.webm
 
 .env
