@@ -58,7 +58,7 @@ function iniciarGravacao() {
       audioRecorder = new MediaRecorder(stream);
       audioRecorder.ondataavailable = (e) => audioChunks.push(e.data);
       audioRecorder.onstop = () => {
-        audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        audioBlob = new Blob(audioChunks, { type: "audio/wav" });
         mostrarAudioGravado(audioBlob);
       };
       audioRecorder.start();
