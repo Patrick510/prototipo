@@ -3,5 +3,5 @@
 *.mp3
 *.png
 *.wav
-
+__pycache__
 .env
