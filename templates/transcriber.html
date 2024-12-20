@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capturar e Enviar Imagem e Áudio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.0/lame.min.js"></script>
+
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-4 text-center">Capturar, Enviar Imagem e Áudio</h1>
+
+
+    <form class="mt-8 flex align-center justify-center gap-3" method="POST">
+      <button type="submit" value="record" name="selection" id="record" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
+        Iniciar Gravação
+      </button>
+      <button type="submit" name="nulo" value="nulo"></button>
+      <button type="submit" value="stop" name="selection" id="stop" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+        Parar Gravação
+      </button>
+    </form>
+
+    <div id="audioContainer" > {{ record }} </div>
+    <div id="audioContainer" > {{ speech_text }} </div>
+  </div>
+</body>
+
+</html>

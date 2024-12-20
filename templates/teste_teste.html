@@ -25,19 +25,20 @@
     <div class="flex space-x-4">
     </div>
 
-    <div class="mt-8 flex align-center justify-center gap-3">
-      <button id="record" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
+    <form class="mt-8 flex align-center justify-center gap-3" method="POST">
+      <button type="submit" value="record" name="selection" id="record" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
         Iniciar Gravação
       </button>
-      <button id="stop" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
+      <button type="submit" value="stop" name="selection" id="stop" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600">
         Parar Gravação
       </button>
-    </div>
+    </form>
 
-    <div id="audioContainer" class="mt-4"></div>
+    <div id="audioContainer" class="mt-4"> {{ speech_text }} </div>
   </div>
-
-  <script src="../static/js/script3.js"></script>
 </body>
 
+<script>
+  
+</script>
 </html>
