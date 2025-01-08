@@ -6,8 +6,8 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def start():
-    record = ''  # Inicializa a variável record para evitar erros
-    speech_text = 'Aqui aparecerá o texto transcrito'  # Texto padrão
+    record = ''  
+    speech_text = 'Aqui aparecerá o texto transcrito' 
 
     if request.method == 'POST':
         selection = request.form['selection']
@@ -20,10 +20,8 @@ def start():
                 record = 'Gravação finalizada'
 
 
-        # Retorna a página atualizada com os dados de POST
         return render_template('transcriber.html', record=record, speech_text=speech_text)
 
-    # Retorna a página inicial no método GET
     return render_template('transcriber.html', record=record, speech_text=speech_text)
 
 
