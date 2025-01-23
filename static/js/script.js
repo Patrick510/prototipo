@@ -58,6 +58,22 @@ stop.addEventListener("click", () => {
   stop.disabled = true;
 });
 
+function reproduzirAudio() {
+  fetch("/audio")
+    .then((response) => {
+      if (response.ok) {
+        return response.blob();
+      } else {
+        throw new Error("Erro ao carregar o áudio");
+      }
+    })
+    .then((blob) => {
+      const audioURL = URL.createObjectURL(blob);
+      document.getElementById("audioPlayer").src = audioURL;
+    })
+    .catch((error) => console.error("Erro:", error));
+}
+
 function capturarImagem() {
   const video = document.getElementById("video");
   const canvas = document.getElementById("canvas");
@@ -97,7 +113,10 @@ function enviarImagemETexto() {
       body: formData,
     })
       .then((response) => response.json())
-      .then((data) => console.log("Dados enviados:", data))
+      .then((data) => {
+        console.log("Dados enviados:", data);
+        reproduzirAudio(); // Reproduz o áudio após o envio
+      })
       .catch((error) => console.error("Erro ao enviar os dados:", error));
   }, "image/png");
 }

@@ -1,5 +1,5 @@
 import google.generativeai as genai
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 from dotenv import load_dotenv as ld
 import pyttsx3
@@ -38,13 +38,13 @@ def processa_imagem(image, text):
 
         engine.say(response.text)
         engine.save_to_file(response.text, 'descricao.mp3')  
-        engine.runAndWait()
+        
+        # engine.runAndWait()
 
         print("Descrição salva como 'descricao.mp3'")
 
     finally:
         print("resposta ja dada fi")
-
 
 @xapp.route("/upload", methods=["POST"])
 def upload_files():
@@ -63,6 +63,15 @@ def upload_files():
     processa_imagem(os.path.join(UPLOAD_FOLDER, secure_filename(image.filename)), text)
 
     return jsonify({"message": "Imagem e texto enviados com sucesso!"}), 200
+
+@xapp.route("/audio", methods=["GET"])
+def get_audio():
+    audio_path = "descricao.mp3"  # Caminho para o arquivo gerado
+    if os.path.exists(audio_path):
+        return send_file(audio_path, as_attachment=False, mimetype="audio/mpeg")
+    else:
+        return jsonify({"error": "Arquivo de áudio não encontrado"}), 404
+
 
 if __name__ == "__main__":
     xapp.run(debug=True, host="0.0.0.0")
