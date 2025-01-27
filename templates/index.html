@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capturar Imagem e Gravar Áudio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="shortcut icon" href="../static/img/favicon.ico" type="image/x-icon">
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-4 text-center">Capturar Imagem e Reconhecer Fala</h1>
+
+    <div class="mb-4">
+      <video id="video" class="rounded-lg w-full h-auto border border-gray-300" autoplay></video>
+    </div>
+
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <div id="photoContainer" class="mb-4 text-center">
+      <h2 class="text-lg font-semibold mb-2">Imagem Capturada</h2>
+    </div>
+
+    <div id="textoReconhecidoContainer" class="mt-4 text-center">
+      <h2 class="text-lg font-semibold mb-2">Texto Reconhecido</h2>
+      <p id="textoReconhecido" class="text-gray-600">Aqui será exibido o texto da fala...</p>
+    </div>
+
+    <div class="mt-8 flex justify-center gap-3">
+      <button id="record" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
+        Capturar Imagem e Reconhecer Fala
+      </button>
+      <button id="stop" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" disabled>
+        Parar Reconhecimento
+      </button>
+    </div>
+
+  </div>
+
+  <script>
+    const record = document.querySelector("#record");
+    const stop = document.querySelector("#stop");
+    const video = document.querySelector("#video");
+    const photoContainer = document.querySelector("#photoContainer");
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    let recognition;
+
+    window.onload = () => {
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => (video.srcObject = stream))
+        .catch((error) => {
+          console.error("Erro ao acessar a câmera:", error);
+          alert(
+            "Não foi possível acessar a câmera. Verifique as permissões do navegador."
+          );
+        });
+
+      if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = "pt-BR";
+        recognition.interimResults = true;
+        recognition.onstart = () => {
+          console.log("A gravação de áudio começou...");
+        };
+
+        recognition.onresult = (event) => {
+          const texto = event.results[0][0].transcript;
+          console.log("Texto reconhecido:", texto);
+          document.getElementById("textoReconhecido").innerText = texto;
+        };
+
+        recognition.onerror = (event) => {
+          console.error("Erro de reconhecimento: ", event.error);
+        };
+
+        recognition.onend = () => {
+          console.log("A gravação terminou.");
+        };
+      } else {
+        console.log("Web Speech API não é suportada neste navegador.");
+      }
+    };
+
+    record.addEventListener("click", () => {
+      capturarImagem();
+      iniciarReconhecimento();
+      record.disabled = true;
+      stop.disabled = false;
+    });
+
+    stop.addEventListener("click", () => {
+      pararReconhecimento();
+      enviarImagemETexto();
+      record.disabled = false;
+      stop.disabled = true;
+    });
+
+    function capturarImagem() {
+      const video = document.getElementById("video");
+      const canvas = document.getElementById("canvas");
+      const contexto = canvas.getContext("2d");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      contexto.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const photoContainer = document.getElementById("photoContainer");
+      const imgElement = document.createElement("img");
+      imgElement.src = canvas.toDataURL("image/png");
+      imgElement.className = "rounded-lg w-full border border-gray-300";
+      photoContainer.innerHTML = "";
+      photoContainer.appendChild(imgElement);
+    }
+
+    function iniciarReconhecimento() {
+      recognition.start();
+    }
+
+    function pararReconhecimento() {
+      recognition.stop();
+    }
+
+    function enviarImagemETexto() {
+      const canvas = document.getElementById("canvas");
+      const formData = new FormData();
+
+      canvas.toBlob((imageBlob) => {
+        formData.append("image", imageBlob, "captura.png");
+
+        const texto = document.getElementById("textoReconhecido").innerText;
+        formData.append("text", texto);
+
+        fetch("http://172.26.165.87:5000/upload", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => console.log("Dados enviados:", data))
+          .catch((error) => console.error("Erro ao enviar os dados:", error));
+      }, "image/png");
+    }
+
+
+  </script>
+</body>
+
+</html>
