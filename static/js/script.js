@@ -56,6 +56,8 @@ stop.addEventListener("click", () => {
   enviarImagemETexto();
   record.disabled = false;
   stop.disabled = true;
+
+  navigator.mediaDevices.getUserMedia({ video: true });
 });
 
 function capturarImagem() {
@@ -97,7 +99,20 @@ function enviarImagemETexto() {
       body: formData,
     })
       .then((response) => response.json())
-      .then((data) => console.log("Dados enviados:", data))
+      .then((data) => {
+        if (data.message) {
+          console.log("Mensagem gerada:", data.message);
+
+          const synth = window.speechSynthesis;
+          const utterance = new SpeechSynthesisUtterance(data.message);
+          utterance.lang = "pt-BR";
+          synth.speak(utterance);
+
+          document.getElementById("textoReconhecido").innerText = data.message;
+        } else {
+          console.error("Erro ao receber mensagem do backend:", data.error);
+        }
+      })
       .catch((error) => console.error("Erro ao enviar os dados:", error));
   }, "image/png");
 }
