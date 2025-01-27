@@ -3,6 +3,5 @@
 *.mp3
 *.png
 *.wav
-*.webm
 __pycache__
 .env
