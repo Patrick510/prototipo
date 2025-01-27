@@ -6,8 +6,11 @@ const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
 let recognition;
+let isListening = false; // Para evitar capturas repetidas
+let isAwaitingPost = false;
 
 window.onload = () => {
+  // Acessar a câmera
   navigator.mediaDevices
     .getUserMedia({ video: true })
     .then((stream) => (video.srcObject = stream))
@@ -18,18 +21,35 @@ window.onload = () => {
       );
     });
 
+  // Configurar o reconhecimento de fala
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
     recognition.lang = "pt-BR";
     recognition.interimResults = true;
-    recognition.onstart = () => {
-      console.log("A gravação de áudio começou...");
-    };
+    recognition.continuous = true; // Ativar modo contínuo
 
     recognition.onresult = (event) => {
-      const texto = event.results[0][0].transcript;
+      const texto =
+        event.results[event.results.length - 1][0].transcript.trim();
       console.log("Texto reconhecido:", texto);
       document.getElementById("textoReconhecido").innerText = texto;
+
+      // Verificar se a palavra-chave foi dita
+      if (texto.toLowerCase().includes("alex") && !isListening) {
+        isListening = true; // Prevenir múltiplas ativações
+        console.log("Palavra-chave detectada. Iniciando captura...");
+        capturarImagem();
+        iniciarReconhecimento();
+        setTimeout(() => (isListening = false), 5000); // Permitir nova ativação após 5 segundos
+      }
+
+      if (texto.includes("enviar") && !isAwaitingPost) {
+        isAwaitingPost = true;
+        console.log("Palavra-chave 'Enviar' detectada. Enviando dados...");
+        pararReconhecimento();
+        enviarImagemETexto();
+        setTimeout(() => (isAwaitingPost = false), 5000); // Resetar após 5 segundos
+      }
     };
 
     recognition.onerror = (event) => {
@@ -37,8 +57,11 @@ window.onload = () => {
     };
 
     recognition.onend = () => {
-      console.log("A gravação terminou.");
+      console.log("Reconhecimento de fala encerrado. Reiniciando...");
+      recognition.start(); // Reiniciar para continuar ouvindo
     };
+
+    recognition.start(); // Começar a ouvir imediatamente
   } else {
     console.log("Web Speech API não é suportada neste navegador.");
   }
@@ -77,11 +100,12 @@ function capturarImagem() {
 }
 
 function iniciarReconhecimento() {
-  recognition.start();
+  console.log("Iniciando reconhecimento de fala...");
 }
 
 function pararReconhecimento() {
   recognition.stop();
+  console.log("Reconhecimento de fala interrompido.");
 }
 
 function enviarImagemETexto() {

@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Capturar Imagem e Gravar Áudio</title>
+  <title>Capturar Imagem e Reconhecer Fala</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="shortcut icon" href="../static/img/favicon.ico" type="image/x-icon">
 </head>
@@ -27,32 +27,9 @@
       <h2 class="text-lg font-semibold mb-2">Texto Reconhecido</h2>
       <p id="textoReconhecido" class="text-gray-600">Aqui será exibido o texto da fala...</p>
     </div>
-
-    <div class="mt-8 flex justify-center gap-3">
-      <button id="record" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600">
-        Capturar Imagem e Reconhecer Fala
-      </button>
-      <button id="stop" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" disabled>
-        Parar Reconhecimento
-      </button>
-    </div>
-
   </div>
 
-  <script src="../static/js/script.js">
-    const replayAudio = document.getElementById("replayAudio");
-    let lastMessage = "";
-
-    replayAudio.addEventListener("click", () => {
-      if (lastMessage) {
-        const synth = window.speechSynthesis;
-        const utterance = new SpeechSynthesisUtterance(lastMessage);
-        utterance.lang = "pt-BR";
-        synth.speak(utterance);
-      }
-    });
-  </script>
-
+  <script src="../static/js/script.js"></script>
 </body>
 
 </html>
