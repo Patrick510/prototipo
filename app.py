@@ -25,7 +25,8 @@ def processa_imagem(image, text):
         genai_image = genai.upload_file(path=image, display_name="imagem")
         response = model.generate_content([ 
             genai_image, 
-            "Sou uma pessoa cega. Com base na imagem, explique de forma simples e objetiva, sem introdução, vá direto ao ponto e seja rápido:", text
+            "Descreva a imagem de forma extremamente objetiva e sucinta, respondendo exclusivamente ao contexto solicitado, prefiro que não fale do ambiente diretamente, tente apenas responder a minha pergunta, não se esqueça que sou deficiente visual: ", 
+            text
         ])
         
         print(f"> {response.text}")

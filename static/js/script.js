@@ -6,11 +6,10 @@ const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
 
 let recognition;
-let isListening = false; // Para evitar capturas repetidas
+let isListening = false;
 let isAwaitingPost = false;
 
 window.onload = () => {
-  // Acessar a câmera
   navigator.mediaDevices
     .getUserMedia({ video: true })
     .then((stream) => (video.srcObject = stream))
@@ -21,12 +20,11 @@ window.onload = () => {
       );
     });
 
-  // Configurar o reconhecimento de fala
   if (SpeechRecognition) {
     recognition = new SpeechRecognition();
     recognition.lang = "pt-BR";
     recognition.interimResults = true;
-    recognition.continuous = true; // Ativar modo contínuo
+    recognition.continuous = true;
 
     recognition.onresult = (event) => {
       const texto =
@@ -34,21 +32,20 @@ window.onload = () => {
       console.log("Texto reconhecido:", texto);
       document.getElementById("textoReconhecido").innerText = texto;
 
-      // Verificar se a palavra-chave foi dita
       if (texto.toLowerCase().includes("alex") && !isListening) {
-        isListening = true; // Prevenir múltiplas ativações
+        isListening = true;
         console.log("Palavra-chave detectada. Iniciando captura...");
         capturarImagem();
         iniciarReconhecimento();
-        setTimeout(() => (isListening = false), 5000); // Permitir nova ativação após 5 segundos
+        setTimeout(() => (isListening = false), 5000);
       }
 
-      if (texto.includes("enviar") && !isAwaitingPost) {
+      if (texto.includes("câmbio") && !isAwaitingPost) {
         isAwaitingPost = true;
-        console.log("Palavra-chave 'Enviar' detectada. Enviando dados...");
+        console.log("Palavra-chave 'Câmbio' detectada. Enviando dados...");
         pararReconhecimento();
         enviarImagemETexto();
-        setTimeout(() => (isAwaitingPost = false), 5000); // Resetar após 5 segundos
+        setTimeout(() => (isAwaitingPost = false), 5000);
       }
     };
 
@@ -58,10 +55,10 @@ window.onload = () => {
 
     recognition.onend = () => {
       console.log("Reconhecimento de fala encerrado. Reiniciando...");
-      recognition.start(); // Reiniciar para continuar ouvindo
+      recognition.start();
     };
 
-    recognition.start(); // Começar a ouvir imediatamente
+    recognition.start();
   } else {
     console.log("Web Speech API não é suportada neste navegador.");
   }
