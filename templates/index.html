@@ -1,35 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Capturar Imagem e Reconhecer Fala</title>
+  <title>3D Audio Visualiser</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="shortcut icon" href="../static/img/favicon.ico" type="image/x-icon">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            poppins: ['Poppins', 'sans-serif'],
+          },
+        },
+      },
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/102/three.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.3.0/simplex-noise.min.js"></script>
+
+  <script src="/static/js/script.js" defer></script>
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-  <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-    <h1 class="text-2xl font-bold mb-4 text-center">Capturar Imagem e Reconhecer Fala</h1>
+<body class="flex flex-col h-full overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 text-white font-poppins">
+  <canvas id="canvas" class="hidden"></canvas>
 
-    <div class="mb-4">
-      <video id="video" class="rounded-lg w-full h-auto border border-gray-300" autoplay></video>
-    </div>
+  <video id="video" autoplay playsinline class="hidden"></video>
 
-    <canvas id="canvas" style="display: none;"></canvas>
-
-    <div id="photoContainer" class="mb-4 text-center">
-      <h2 class="text-lg font-semibold mb-2">Imagem Capturada</h2>
-    </div>
-
-    <div id="textoReconhecidoContainer" class="mt-4 text-center">
-      <h2 class="text-lg font-semibold mb-2">Texto Reconhecido</h2>
-      <p id="textoReconhecido" class="text-gray-600">Aqui será exibido o texto da fala...</p>
-    </div>
+  <div id="photoContainer" class="z-40 flex items-center p-3 bg-gray-700 justify-between w-[280px] rounded-lg gap-5 absolute opacity-0 transform -translate-y-5 transition-all duration-500 ease-in-out m-[20px] shadow-lg">
+    <p id="status" class="text-sm font-medium"></p>
   </div>
 
-  <script src="../static/js/script.js"></script>
+  <div id="visualiser" class="flex-1 cursor-pointer relative"></div>
+
+  <div id="responseAPI" class="absolute top-0 left-1/2 transform -translate-x-1/2 mt-2 rounded-lg p-4 bg-gray-700 w-[280px] text-white text-sm font-semibold text-center shadow-lg opacity-0 translate-y-[-20px] transition-all duration-500 ease-out">
+    Resposta api
+  </div>
+
+  <div id="responseText" class="absolute bottom-0 left-0 m-2 rounded-lg p-4 bg-gray-700 w-[280px] text-white text-sm font-semibold text-center shadow-lg">
+    Texto recebido
+  </div>
 </body>
 
 </html>
