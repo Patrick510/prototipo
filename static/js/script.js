@@ -1,18 +1,18 @@
 let noise = new SimplexNoise();
 const area = document.getElementById("visualiser");
-const label = document.getElementById("label");
-
 const video = document.querySelector("#video");
 const photoContainer = document.querySelector("#photoContainer");
 const status = document.querySelector("#status");
 const SpeechRecognition =
   window.SpeechRecognition || window.webkitSpeechRecognition;
+const responseTextElement = document.getElementById("responseText");
+const loadingElement = document.getElementById("loading");
+const notificationSound = document.getElementById("notificationSound");
 
 let recognition;
 let isListening = false;
 let isCapturing = false;
-
-const responseTextElement = document.getElementById("responseText");
+let isBusy = false;
 responseTextElement.style.visibility = "hidden"; // Torna o texto invisível inicialmente
 
 window.onload = () => {
@@ -26,58 +26,7 @@ window.onload = () => {
       );
     });
 
-  if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.lang = "pt-BR";
-    recognition.interimResults = true;
-    recognition.continuous = true;
-
-    recognition.onresult = (event) => {
-      const texto = event.results[event.results.length - 1][0].transcript
-        .trim()
-        .toLowerCase();
-
-      if (texto.includes("alex") && !isListening) {
-        isListening = true;
-        isCapturing = true;
-        responseTextElement.style.visibility = "visible";
-        responseTextElement.innerText = "Estou ouvindo...";
-
-        capturarImagem();
-      }
-
-      if (texto.includes("câmbio") && isCapturing) {
-        isListening = false;
-        isCapturing = false;
-        enviarImagemETexto();
-        setTimeout(() => {
-          photoContainer.classList.remove("opacity-100", "translate-y-0");
-          photoContainer.classList.add("opacity-0", "-translate-y-5");
-          responseTextElement.style.visibility = "hidden";
-          console.log("Aguardando comando 'alex' para iniciar...");
-        }, 5000);
-      }
-
-      if (isListening) {
-        responseTextElement.innerText = texto;
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.error("Erro de reconhecimento: ", event.error);
-    };
-
-    recognition.onend = () => {
-      if (isListening || isCapturing) {
-        console.log("Reconhecimento de fala encerrado. Reiniciando...");
-        recognition.start();
-      }
-    };
-
-    recognition.start();
-  } else {
-    console.log("Web Speech API não é suportada neste navegador.");
-  }
+  gravarAudio();
 };
 
 function capturarImagem() {
@@ -104,22 +53,78 @@ function capturarImagem() {
   photoContainer.classList.add("opacity-100", "translate-y-0");
 }
 
-navigator.mediaDevices
-  .getUserMedia({ audio: true })
-  .then(setupMicrophone)
-  .catch((err) => {
-    console.error("Erro ao acessar o microfone:", err);
-    alert("Não foi possível acessar o microfone!");
+function gravarAudio() {
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = "pt-BR";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onresult = (event) => {
+      const texto = event.results[event.results.length - 1][0].transcript
+        .trim()
+        .toLowerCase();
+
+      if (texto.includes("alex") && !isListening && !isBusy) {
+        isListening = true;
+        isCapturing = true;
+        responseTextElement.style.visibility = "visible";
+        responseTextElement.innerText = "Estou ouvindo...";
+        capturarImagem();
+        playNotificationSound();
+      } else if (texto.includes("alex") && isBusy) {
+        responseTextElement.style.visibility = "visible";
+        responseTextElement.innerText =
+          "Estou ocupado processando sua última solicitação. Por favor, aguarde.";
+        setTimeout(() => {
+          responseTextElement.style.visibility = "hidden";
+        }, 3000);
+      }
+
+      if (texto.includes("câmbio") && isCapturing) {
+        isListening = false;
+        isCapturing = false;
+        enviarImagemETexto();
+      }
+
+      if (isListening) {
+        responseTextElement.innerText = texto;
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Erro de reconhecimento: ", event.error);
+    };
+
+    recognition.onend = () => {
+      if (isListening || isCapturing) {
+        console.log("Reconhecimento de fala encerrado. Reiniciando...");
+        recognition.start();
+      }
+    };
+
+    recognition.start();
+  } else {
+    console.log("Web Speech API não é suportada neste navegador.");
+  }
+}
+
+function playNotificationSound() {
+  notificationSound.play().catch((error) => {
+    console.error("Erro ao reproduzir o som de notificação:", error);
   });
+}
 
 function enviarImagemETexto() {
+  isBusy = true;
+  loadingElement.classList.remove("hidden");
+
   const canvas = document.getElementById("canvas");
   const formData = new FormData();
 
   canvas.toBlob((imageBlob) => {
     formData.append("image", imageBlob, "captura.png");
-
-    const texto = document.getElementById("responseText").innerText;
+    const texto = responseTextElement.innerText;
     formData.append("text", texto);
 
     fetch("/upload", {
@@ -134,6 +139,10 @@ function enviarImagemETexto() {
           const synth = window.speechSynthesis;
           const utterance = new SpeechSynthesisUtterance(data.message);
           utterance.lang = "pt-BR";
+          utterance.onend = () => {
+            loadingElement.classList.add("hidden");
+            isBusy = false;
+          };
           synth.speak(utterance);
 
           const responseApiElement = document.getElementById("responseAPI");
@@ -151,13 +160,58 @@ function enviarImagemETexto() {
               "translate-y-[-20px]"
             );
             responseApiElement.classList.remove("opacity-100", "translate-y-0");
+            photoContainer.classList.remove("opacity-100", "translate-y-0");
+            photoContainer.classList.add("opacity-0", "-translate-y-5");
+            responseTextElement.style.visibility = "hidden";
           }, 5000);
         } else {
           console.error("Erro ao receber mensagem do backend:", data.error);
+          loadingElement.classList.add("hidden");
+          isBusy = false;
         }
       })
-      .catch((error) => console.error("Erro ao enviar os dados:", error));
+      .catch((error) => {
+        console.error("Erro ao enviar os dados:", error);
+        loadingElement.classList.add("hidden");
+        isBusy = false;
+      });
   }, "image/png");
+}
+
+function updateStatus(message) {
+  const statusElement = document.createElement("div");
+  statusElement.className =
+    "fixed top-0 left-0 right-0 bg-blue-500 text-white p-2 text-center";
+  statusElement.textContent = message;
+  document.body.appendChild(statusElement);
+  setTimeout(() => {
+    statusElement.remove();
+  }, 3000);
+}
+
+function init() {
+  window.onload = () => {
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then((stream) => (video.srcObject = stream))
+      .catch((error) => {
+        console.error("Erro ao acessar a câmera:", error);
+        alert(
+          "Não foi possível acessar a câmera. Verifique as permissões do navegador."
+        );
+      });
+
+    gravarAudio();
+    notificationSound.load();
+  };
+
+  navigator.mediaDevices
+    .getUserMedia({ audio: true })
+    .then(setupMicrophone)
+    .catch((err) => {
+      console.error("Erro ao acessar o microfone:", err);
+      alert("Não foi possível acessar o microfone!");
+    });
 }
 
 function setupMicrophone(stream) {
@@ -303,3 +357,5 @@ window.addEventListener("resize", () => {
   camera.aspect = area.clientWidth / area.clientHeight;
   camera.updateProjectionMatrix();
 });
+
+init();

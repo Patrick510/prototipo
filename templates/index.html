@@ -29,6 +29,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/simplex-noise/2.3.0/simplex-noise.min.js"></script>
 
   <script src="/static/js/script.js" defer></script>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 
 <body class="flex flex-col h-full overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 text-white font-poppins">
@@ -49,6 +50,12 @@
   <div id="responseText" class="absolute bottom-0 left-0 m-2 rounded-lg p-4 bg-gray-700 w-[280px] text-white text-sm font-semibold text-center shadow-lg">
     Texto recebido
   </div>
+
+  <audio id="notificationSound" src="/static/audio/notification.mp3" style="display: none;"></audio>
+
+  <div id="loading" class="hidden">
+  </div>
+
 </body>
 
 </html>
