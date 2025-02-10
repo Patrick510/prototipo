@@ -16,37 +16,44 @@ UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 xapp.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+
 @xapp.route("/")
 def home():
     return render_template("index.html")
 
+
 def processa_imagem(image, text):
     try:
         genai_image = genai.upload_file(path=image, display_name="imagem")
-        response = model.generate_content([ 
-            genai_image, 
-            "Descreva a imagem de forma extremamente objetiva e sucinta, respondendo exclusivamente ao contexto solicitado, prefiro que não fale do ambiente diretamente, tente apenas responder a minha pergunta, não se esqueça que sou deficiente visual: ", 
-            text
-        ])
-        
+        print(text)
+        response = model.generate_content(
+            [
+                genai_image,
+                f"""Descreva a imagem de forma extremamente objetiva e sucinta, 
+            respondendo exclusivamente ao contexto solicitado, prefiro que não fale do ambiente diretamente, 
+            tente apenas responder a minha pergunta, não se esqueça que sou deficiente visual: {text}""",
+            ]
+        )
+
         print(f"> {response.text}")
-        
+
         return response.text
 
     finally:
         print("resposta já dada fi")
 
+
 @xapp.route("/upload", methods=["POST"])
 def upload_files():
-    image = request.files.get('image')
-    text = request.form.get('text')
+    image = request.files.get("image")
+    text = request.form.get("text")
 
     if not image or not text:
         return jsonify({"error": "Imagem ou texto ausente"}), 400
 
     image_path = os.path.join(UPLOAD_FOLDER, secure_filename(image.filename))
     image.save(image_path)
-    
+
     mensagem_gerada = processa_imagem(image_path, text)
 
     return jsonify({"message": mensagem_gerada}), 200
