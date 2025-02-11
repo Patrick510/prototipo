@@ -60,4 +60,4 @@ def upload_files():
 
 
 if __name__ == "__main__":
-    xapp.run(debug=True, host="0.0.0.0")
+    xapp.run(debug=True, host="0.0.0.0", port=5000)
