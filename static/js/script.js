@@ -13,7 +13,7 @@ let recognition;
 let isListening = false;
 let isCapturing = false;
 let isBusy = false;
-responseTextElement.style.visibility = "hidden"; // Torna o texto invisível inicialmente
+responseTextElement.style.visibility = "hidden";
 
 window.onload = () => {
   navigator.mediaDevices
@@ -182,7 +182,7 @@ function enviarImagemETexto() {
       .then((response) => response.json())
       .then((data) => {
         console.log("Dados enviados:", data);
-        reproduzirAudio(); // Reproduz o áudio após o envio
+        reproduzirAudio();
       })
       .catch((error) => console.error("Erro ao enviar os dados:", error));
   }, "image/png");
@@ -251,11 +251,10 @@ function startVis(analyser, dataArray) {
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(area.clientWidth, area.clientHeight);
-  renderer.setClearColor("#ffffff"); // Cor de fundo mais escura
+  renderer.setClearColor("#ffffff");
 
   area.appendChild(renderer.domElement);
 
-  // Adiciona a esfera
   const geometry = new THREE.IcosahedronGeometry(20, 3);
   const material = new THREE.MeshLambertMaterial({
     color: "#374151",
@@ -264,7 +263,6 @@ function startVis(analyser, dataArray) {
   const sphere = new THREE.Mesh(geometry, material);
   scene.add(sphere);
 
-  // Adiciona luz
   const light = new THREE.DirectionalLight("#ffffff", 0.8);
   light.position.set(100, 100, 100);
   scene.add(light);
@@ -317,7 +315,7 @@ function WarpSphere(mesh, bassFr, treFr) {
   mesh.geometry.vertices.forEach(function (vertex, i) {
     var offset = mesh.geometry.parameters.radius;
     var amp = 5;
-    var time = currentTime; // Usando tempo atual para a animação
+    var time = currentTime;
     vertex.normalize();
     var rf = 0.00001;
     var distance =
