@@ -109,58 +109,10 @@ function gravarAudio() {
   }
 }
 
-record.addEventListener("click", () => {
-  capturarImagem();
-  iniciarReconhecimento();
-  record.disabled = true;
-  stop.disabled = false;
-});
-
-stop.addEventListener("click", () => {
-  pararReconhecimento();
-  enviarImagemETexto();
-  record.disabled = false;
-  stop.disabled = true;
-});
-
-function reproduzirAudio() {
-  fetch("/audio")
-    .then((response) => {
-      if (response.ok) {
-        return response.blob();
-      } else {
-        throw new Error("Erro ao carregar o áudio");
-      }
-    })
-    .then((blob) => {
-      const audioURL = URL.createObjectURL(blob);
-      document.getElementById("audioPlayer").src = audioURL;
-    })
-    .catch((error) => console.error("Erro:", error));
-}
-
-function capturarImagem() {
-  const video = document.getElementById("video");
-  const canvas = document.getElementById("canvas");
-  const contexto = canvas.getContext("2d");
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  contexto.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-  const photoContainer = document.getElementById("photoContainer");
-  const imgElement = document.createElement("img");
-  imgElement.src = canvas.toDataURL("image/png");
-  imgElement.className = "rounded-lg w-full border border-gray-300";
-  photoContainer.innerHTML = "";
-  photoContainer.appendChild(imgElement);
-}
-
-function iniciarReconhecimento() {
-  recognition.start();
-}
-
-function pararReconhecimento() {
-  recognition.stop();
+function playNotificationSound() {
+  notificationSound.play().catch((error) => {
+    console.error("Erro ao reproduzir o som de notificação:", error);
+  });
 }
 
 function enviarImagemETexto() {
@@ -170,9 +122,20 @@ function enviarImagemETexto() {
   const canvas = document.getElementById("canvas");
   const formData = new FormData();
 
+  if (!canvas) {
+    console.error("Canvas não encontrado!");
+    return;
+  }
+
   canvas.toBlob((imageBlob) => {
+    if (!imageBlob) {
+      console.error("Erro ao criar Blob da imagem!");
+      return;
+    }
+
     formData.append("image", imageBlob, "captura.png");
-    const texto = responseTextElement.innerText;
+
+    const texto = responseTextElement?.innerText || "";
     formData.append("text", texto);
 
     fetch("/upload", {
@@ -181,11 +144,55 @@ function enviarImagemETexto() {
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("Dados enviados:", data);
-        reproduzirAudio();
+        if (data.message) {
+          console.log("Mensagem gerada:", data.message);
+
+          const synth = window.speechSynthesis;
+          const utterance = new SpeechSynthesisUtterance(data.message);
+          utterance.lang = "pt-BR";
+          utterance.onend = () => {
+            loadingElement.classList.add("hidden");
+            isBusy = false;
+          };
+          synth.speak(utterance);
+
+          const responseApiElement = document.getElementById("responseAPI");
+          responseApiElement.innerText = data.message;
+
+          responseApiElement.classList.remove(
+            "opacity-0",
+            "translate-y-[-20px]"
+          );
+          responseApiElement.classList.add("opacity-100", "translate-y-0");
+
+          setTimeout(() => {
+            responseApiElement.classList.add(
+              "opacity-0",
+              "translate-y-[-20px]"
+            );
+            responseApiElement.classList.remove("opacity-100", "translate-y-0");
+            photoContainer.classList.remove("opacity-100", "translate-y-0");
+            photoContainer.classList.add("opacity-0", "-translate-y-5");
+            responseTextElement.style.visibility = "hidden";
+          }, 5000);
+        } else {
+          console.error("Erro ao receber mensagem do backend:", data.error);
+          loadingElement.classList.add("hidden");
+          isBusy = false;
+        }
       })
-      .catch((error) => console.error("Erro ao enviar os dados:", error));
+      .catch((error) => {
+        console.error("Erro ao enviar os dados:", error);
+        loadingElement.classList.add("hidden");
+        isBusy = false;
+      });
   }, "image/png");
+
+  if (!canvas.toBlob) {
+    console.warn("toBlob não suportado, usando toDataURL como fallback");
+    const imageDataURL = canvas.toDataURL("image/png");
+    formData.append("image", imageDataURL);
+  }
 }
 
 function updateStatus(message) {
@@ -237,6 +244,8 @@ function setupMicrophone(stream) {
 
   startVis(analyser, dataArray);
 }
+
+let renderer;
 
 function startVis(analyser, dataArray) {
   const scene = new THREE.Scene();
