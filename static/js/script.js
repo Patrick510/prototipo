@@ -109,10 +109,58 @@ function gravarAudio() {
   }
 }
 
-function playNotificationSound() {
-  notificationSound.play().catch((error) => {
-    console.error("Erro ao reproduzir o som de notificação:", error);
-  });
+record.addEventListener("click", () => {
+  capturarImagem();
+  iniciarReconhecimento();
+  record.disabled = true;
+  stop.disabled = false;
+});
+
+stop.addEventListener("click", () => {
+  pararReconhecimento();
+  enviarImagemETexto();
+  record.disabled = false;
+  stop.disabled = true;
+});
+
+function reproduzirAudio() {
+  fetch("/audio")
+    .then((response) => {
+      if (response.ok) {
+        return response.blob();
+      } else {
+        throw new Error("Erro ao carregar o áudio");
+      }
+    })
+    .then((blob) => {
+      const audioURL = URL.createObjectURL(blob);
+      document.getElementById("audioPlayer").src = audioURL;
+    })
+    .catch((error) => console.error("Erro:", error));
+}
+
+function capturarImagem() {
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const contexto = canvas.getContext("2d");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  contexto.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  const photoContainer = document.getElementById("photoContainer");
+  const imgElement = document.createElement("img");
+  imgElement.src = canvas.toDataURL("image/png");
+  imgElement.className = "rounded-lg w-full border border-gray-300";
+  photoContainer.innerHTML = "";
+  photoContainer.appendChild(imgElement);
+}
+
+function iniciarReconhecimento() {
+  recognition.start();
+}
+
+function pararReconhecimento() {
+  recognition.stop();
 }
 
 function enviarImagemETexto() {
@@ -133,48 +181,10 @@ function enviarImagemETexto() {
     })
       .then((response) => response.json())
       .then((data) => {
-        if (data.message) {
-          console.log("Mensagem gerada:", data.message);
-
-          const synth = window.speechSynthesis;
-          const utterance = new SpeechSynthesisUtterance(data.message);
-          utterance.lang = "pt-BR";
-          utterance.onend = () => {
-            loadingElement.classList.add("hidden");
-            isBusy = false;
-          };
-          synth.speak(utterance);
-
-          const responseApiElement = document.getElementById("responseAPI");
-          responseApiElement.innerText = data.message;
-
-          responseApiElement.classList.remove(
-            "opacity-0",
-            "translate-y-[-20px]"
-          );
-          responseApiElement.classList.add("opacity-100", "translate-y-0");
-
-          setTimeout(() => {
-            responseApiElement.classList.add(
-              "opacity-0",
-              "translate-y-[-20px]"
-            );
-            responseApiElement.classList.remove("opacity-100", "translate-y-0");
-            photoContainer.classList.remove("opacity-100", "translate-y-0");
-            photoContainer.classList.add("opacity-0", "-translate-y-5");
-            responseTextElement.style.visibility = "hidden";
-          }, 5000);
-        } else {
-          console.error("Erro ao receber mensagem do backend:", data.error);
-          loadingElement.classList.add("hidden");
-          isBusy = false;
-        }
+        console.log("Dados enviados:", data);
+        reproduzirAudio(); // Reproduz o áudio após o envio
       })
-      .catch((error) => {
-        console.error("Erro ao enviar os dados:", error);
-        loadingElement.classList.add("hidden");
-        isBusy = false;
-      });
+      .catch((error) => console.error("Erro ao enviar os dados:", error));
   }, "image/png");
 }
 
